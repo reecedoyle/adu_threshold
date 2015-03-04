@@ -58,25 +58,25 @@ def splitFeedbackList(feedBackPoints):
 	for x in feedBackPoints:
 		if x[1] == "green":
 			if x[2] == "red":
-				GR.append(x)
+				GR.append(x[0])
 				continue
 			if x[2] == "amber":
-				GA.append(x)
+				GA.append(x[0])
 				continue
 		if x[1] == "amber":
 			if x[2] == "red":
-				AR.append(x)
+				AR.append(x[0])
 				continue
 			if x[2] == "green":
-				AG.append(x)
+				AG.append(x[0])
 				continue
 
 		if x[1] == "red":
 			if x[2] == "amber":
-				RA.append(x)
+				RA.append(x[0])
 				continue
 			if x[2] == "green":
-				RG.append(x)
+				RG.append(x[0])
 				continue
 
 	return (GR,GA,AR,AG,RA,RG)
