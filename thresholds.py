@@ -10,9 +10,9 @@ def getPercentage(threshold, points):
 
 	return ((var/var2)*100)
 
-def getAvgThreshold(percentage, points):
-	index = int((len(points)*(percentage/100)))
-	return points[index]
+def getThreshold(percentage, points):
+	index = len(points) - int((len(points)*(percentage/100)))
+	return (points[index] + points[index-1])/2
 
 def avg(a):
 	return sum(a)/len(a)
@@ -88,7 +88,7 @@ def formulaUP(score, threshold):
 def formulaDOWN(score, threshold):
 	return	(BASE_DECREASE_MULTIPLIER/((FORMULA_DOWN_CONST/score) - threshold))  
 
-def calculateNewThresholds(feedbackList, previousRedThreshold, previousAmberThreshold):
+def calculateNewThresholds(feedbackList, redThresh, amberThresh):
 	fsplits = splitFeedbackList(feedbackList)
 	avgFSplits = (avg(fsplits[0]),avg(fsplits[1]),avg(fsplits[2]),avg(fsplits[3]),avg(fsplits[4]),avg(fsplits[5]))
 	lenFSplits = (len(fsplits[0]),len(fsplits[1]),len(fsplits[2]),len(fsplits[3]),len(fsplits[4]),len(fsplits[5]))
@@ -96,23 +96,23 @@ def calculateNewThresholds(feedbackList, previousRedThreshold, previousAmberThre
 	ambermultipliers = []
 
 	#scenario 1
-	redmultipliers.append(formulaDOWN(avgFSplits[0],previousRedThreshold))
+	redmultipliers.append(formulaDOWN(avgFSplits[0],prevRedThresh))
 	ambermultipliers.append(redmultipliers[0])
 
 	#scenario 2
-	ambermultipliers.append(formulaDOWN(avgFSplits[1],previousAmberThreshold))
+	ambermultipliers.append(formulaDOWN(avgFSplits[1],prevAmberThresh))
 
 	#scenario 3
-	redmultipliers.append(formulaDOWN(avgFSplits[2],previousRedThreshold))
+	redmultipliers.append(formulaDOWN(avgFSplits[2],prevRedThresh))
 	
 	#scenario 4
-	ambermultipliers.append(formulaUP(avgFSplits[3],previousAmberThreshold))
+	ambermultipliers.append(formulaUP(avgFSplits[3],prevAmberThresh))
 
 	#scenario 5
-	redmultipliers.append(formulaUP(avgFSplits[4],previousRedThreshold))
+	redmultipliers.append(formulaUP(avgFSplits[4],prevRedThresh))
 	
 	#secnario 6
-	redmultipliers.append(formulaUP(avgFSplits[5],previousRedThreshold))
+	redmultipliers.append(formulaUP(avgFSplits[5],prevRedThresh))
 	ambermultipliers.append(redmultipliers[3])
 
 	newRedThreshold = 0
@@ -131,8 +131,8 @@ def calculateNewThresholds(feedbackList, previousRedThreshold, previousAmberThre
 	newRedThreshold/=(sum(lenFSplits)-(lenFSplits[1]+lenFSplits[3]))
 	newAmberThreshold/=(sum(lenFSplits)-(lenFSplits[2]+lenFSplits[4]))
 
-	newRedThreshold = (newRedThreshold+previousRedThreshold)/2
-	newAmberThreshold = (newAmberThreshold+previousAmberThreshold)/2
+	newRedThreshold = (newRedThreshold+prevRedThresh)/2
+	newAmberThreshold = (newAmberThreshold+prevAmberThresh)/2
 
 	return (newRedThreshold,newAmberThreshold)
 
@@ -144,30 +144,23 @@ BASE_DECREASE_MUTIPLIER = 0.8
 FORMULA_UP_CONST = 1.0
 FORMULA_DOWN_CONST = 1.0
 
-
-
-previousRedPercentage = float(sys.argv[2])
-previousAmberPercentage = float(sys.argv[3])
-previousRedThreshold = float(sys.argv[4])
-previousAmberThreshold = float(sys.argv[5])
-
+redPercent = float(sys.argv[2])
+amberPercent = float(sys.argv[3])
+prevRedThresh = float(sys.argv[4])
+prevAmberThresh = float(sys.argv[5])
 
 data = getData()
 anomalyscores = createAnomalyScoreList(data)
-
-
 feedbackList = createFeedbackList(data)
+#move towards true threshold by half
+newRedThresh = prevRedThresh + (prevRedThresh - getThreshold(redPercent, anomalyscores))/2
+newAmberThresh = prevAmberThresh + (prevAmberThresh - getThreshold(amberPercent, anomalyscores))/2
 
-if(len(feedbackList)==0):
-	currentRedPercentage = getPercentage(previousRedThreshold, anomalyscores)
-	currentAmberPercentage = getPercentage(previousAmberThreshold, anomalyscores)
-	newRedThreshold = getAvgThreshold(((currentRedPercentage+previousRedPercentage)/2), anomalyscores)
-	newAmberThreshold = getAvgThreshold(((currentAmberPercentage+previousAmberPercentage)/2), anomalyscores)
-	#add some code to pass these calculated values to system
-	#print "amber is "+ str(newAmberThreshold) + " red is "+str(newRedThreshold)
-	#print "amber percentage is "+ str(currentAmberPercentage) + " red percentage is " +str(currentRedPercentage)
-else:
-	newThresholds = calculateNewThresholds(feedbackList)
+#add some code to pass these calculated values to system
+#print "amber is "+ str(newAmberThreshold) + " red is "+str(newRedThreshold)
+#print "amber percentage is "+ str(currentAmberPercentage) + " red percentage is " +str(currentRedPercentage)
+if(len(feedbackList)!=0):
+	newThresholds = calculateNewThresholds(feedbackList, newRedThresh, newAmberThresh)
 	#print "amber is "+ str(newThresholds[1]) + " red is "+ str(newThreholds[0])
 
 
