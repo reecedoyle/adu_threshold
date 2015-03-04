@@ -2,15 +2,8 @@ import json
 import urllib2
 import sys
 
-def getPercentage(threshold, points):
-	newlist = [x for x in points if x >= threshold]
-
-	var = float(len(newlist))
-	var2 = float(len(points)) 
-
-	return ((var/var2)*100)
-
 def getThreshold(percentage, points):
+	sorted(points)
 	index = len(points) - int((len(points)*(percentage/100)))
 	return (points[index] + points[index-1])/2
 
@@ -32,8 +25,6 @@ def createAnomalyScoreList(data):
 	for x in data["readings"]:
 		if "anomalyScore" in x:
 			anomalyscores.append(x["anomalyScore"])
-
-	sorted(anomalyscores)
 	return anomalyscores
 
 def createFeedbackList(data):
@@ -136,6 +127,11 @@ def calculateNewThresholds(feedbackList, redThresh, amberThresh):
 
 	return (newRedThreshold,newAmberThreshold)
 
+def getAutoThresh(scores):
+	newRedThresh = prevRedThresh + (prevRedThresh - getThreshold(redPercent, anomalyscores))/2
+	newAmberThresh = prevAmberThresh + (prevAmberThresh - getThreshold(amberPercent, anomalyscores))/2
+	return newAmberThresh, newRedThresh
+
 
 #								Execution begins here
 ########################################################################################
@@ -153,8 +149,7 @@ data = getData()
 anomalyscores = createAnomalyScoreList(data)
 feedbackList = createFeedbackList(data)
 #move towards true threshold by half
-newRedThresh = prevRedThresh + (prevRedThresh - getThreshold(redPercent, anomalyscores))/2
-newAmberThresh = prevAmberThresh + (prevAmberThresh - getThreshold(amberPercent, anomalyscores))/2
+newAmberThresh, newRedThresh = getAutoThresh(anomalyscores)
 
 #add some code to pass these calculated values to system
 #print "amber is "+ str(newAmberThreshold) + " red is "+str(newRedThreshold)
